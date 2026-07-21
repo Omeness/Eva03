@@ -14,4 +14,9 @@ Adicionalmente, permite:
 - Visualizar los productos disponibles (aquellos que no tienen ingredientes vencidos).
 - Visualizar los productos con ingredientes vencidos.
 
+### Por hacer
 
+[] Agregar documentacion
+[] Revisar flujo de uso
+[] Revisar uso de "limpiar_pantalla()"
+[] Dejar de revisar detalles tan pequenios jj

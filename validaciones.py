@@ -37,10 +37,15 @@ def seleccionar_categoria():
 
 
 def leer_precio(mensaje="Precio producto: $"):
-    precio = int(input(mensaje))
-    if precio <= 0:
-        raise ValueError("El precio debe ser un valor positivo")
-    return precio
+    """
+    Pide ingresar el precio de un producto.
+    Vuelve a preguntar si el valor es inválido.
+    """
+    while True:
+        precio = int(input(mensaje))
+        if precio <= 0:
+            raise ValueError("El precio debe ser un valor positivo")
+        return precio
 
 
 def leer_fecha(mensaje):
@@ -134,6 +139,7 @@ def agregar_item(nombre, categoria, precio, ingredientes=None):
 
 
 def buscar_item(nombre_item):
+    """Busca un documento por nombre dentro de la coleccion"""
     resultado = coleccion.find_one({"nombre": nombre_item})
     if not resultado:
         raise ValueError("El producto no esta en el menu.")
@@ -224,7 +230,7 @@ def buscar_plato_interactivo(mensaje="Ingresa el nombre de la preparacion: "):
 
 
 def sugerir_ingredientes(ingredientes_lista, patron, limite=3):
-    """Filtra localmente (ya está el array en memoria) por coincidencia parcial, con regex."""
+    """Filtra localmente por coincidencia parcial."""
     regex = re.compile(re.escape(patron), re.IGNORECASE)
     return [ing for ing in ingredientes_lista if regex.search(ing["nombre"])][:limite]
 
@@ -232,7 +238,7 @@ def sugerir_ingredientes(ingredientes_lista, patron, limite=3):
 def seleccionar_ingrediente_interactivo(plato, mensaje="Nombre del ingrediente: "):
     """
     Pide el nombre de un ingrediente que pertenezca a 'plato'. Si no hay
-    coincidencia exacta, sugiere hasta 3 por similitud (regex). Devuelve
+    coincidencia exacta, sugiere hasta 3 por similitud. Devuelve
     el nombre EXACTO del ingrediente ya validado, o None si no existe o
     el usuario cancela.
     """
@@ -245,7 +251,7 @@ def seleccionar_ingrediente_interactivo(plato, mensaje="Nombre del ingrediente: 
 
     for ing in ingredientes:
         if ing["nombre"] == nombre:
-            return nombre  # coincidencia exacta
+            return nombre
 
     sugerencias = sugerir_ingredientes(ingredientes, nombre)
     if not sugerencias:
