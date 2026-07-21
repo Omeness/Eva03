@@ -33,7 +33,7 @@ def seleccionar_categoria():
             return categorias[opcion]
         except (ValueError, KeyError):
             print("\n[Error] Ingresa un numero de opcion valido.")
-            input("Enter para continuar... ")
+            input("Intenta de nuevo. Enter para continuar... ")
 
 
 def leer_precio(mensaje="Precio producto: $"):
@@ -42,11 +42,15 @@ def leer_precio(mensaje="Precio producto: $"):
     Vuelve a preguntar si el valor es inválido.
     """
     while True:
-        precio = int(input(mensaje))
-        if precio <= 0:
-            raise ValueError("El precio debe ser un valor positivo")
-        return precio
-
+        try:
+            limpiar_pantalla()
+            precio = int(input(mensaje))
+            if precio <= 0:
+                raise ValueError("[Error] El precio debe ser un valor positivo")
+            return precio
+        except ValueError as e:
+            print("[Error] Valor invalido. El precio debe ser un numero entero.")
+            input("\nIntenta de nuevo. Enter para continuar...")
 
 def leer_fecha(mensaje):
     """
@@ -225,8 +229,10 @@ def buscar_plato_interactivo(mensaje="Ingresa el nombre de la preparacion: "):
 
     if opcion < 1 or opcion > len(sugerencias):
         return None
-
-    return sugerencias[opcion - 1]
+    limpiar_pantalla()
+    seleccion = sugerencias[opcion - 1]
+    print(f"Seleccionaste: {seleccion.get('nombre')}")
+    return seleccion
 
 
 def sugerir_ingredientes(ingredientes_lista, patron, limite=3):

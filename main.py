@@ -14,16 +14,15 @@ from gestion_menu import (
 
 if ping_db():
     while True:
-        limpiar_pantalla()
-        menu_menu()
         try:
+            limpiar_pantalla()
+            menu_menu()
             while True:
                 opcion = int(input("Selecciona el numero de opcion: "))
                 if opcion < 1 or opcion > 8:
                     limpiar_pantalla()
-                    print("\n[Error] Ingresa un numero de opcion valido.")
+                    raise ValueError("Numero fuera de rango.")
                     input(f"Valor ingresado: {opcion}.\nEnter para continuar... ")
-                    menu_menu()
                 else:
                     break
             

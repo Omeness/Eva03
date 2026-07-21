@@ -17,7 +17,6 @@ def menu_menu():
 
 def agregar_producto():
     print("=== Agregar producto ===\n")
- 
     try:
         nombre = input("Nombre producto: ").strip().capitalize()
         if not nombre:
@@ -27,13 +26,13 @@ def agregar_producto():
         limpiar_pantalla()
         precio = leer_precio()
         ingredientes = pedir_ingredientes()
- 
+
         item = agregar_item(nombre, categoria, precio, ingredientes)
         print(f"\nSe agrego '{nombre}' al menu. ({len(ingredientes)} ingrediente(s))")
- 
+
     except ValueError as e:
         print("\n[Error]:",e)
-        print("** No se agregaron productos al menu **")
+        print("** No se agregaron productos al menu. **")
 
 
 def eliminar_producto():
