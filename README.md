@@ -17,6 +17,9 @@ Adicionalmente, permite:
 ### Por hacer
 
 [] Agregar documentacion
+
 [] Revisar flujo de uso
+
 [] Revisar uso de "limpiar_pantalla()"
+
 [] Dejar de revisar detalles tan pequenios jj
