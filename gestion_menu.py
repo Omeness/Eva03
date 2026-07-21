@@ -1,6 +1,5 @@
 from validaciones import *
 
-
 def menu_menu():
     print("""
 === Gestion Menu ===
@@ -14,6 +13,7 @@ def menu_menu():
 [7] Ver ingrdientes por vencer.
 [8] Salir.
     """)
+
 
 def agregar_producto():
     print("=== Agregar producto ===\n")
@@ -39,9 +39,13 @@ def agregar_producto():
 def eliminar_producto():
     print("=== Eliminar producto ===\n")
 
-    nombre = input("Ingresa el nombre de la preparacion: ").strip().capitalize()
-    item = buscar_item(nombre)
-    confirmacion = input(f"Seguro que quieres eliminar '{nombre}'? Escribe 'eliminar' para confirmar: ")
+    item = buscar_plato_interactivo()
+    if item is None:
+        return
+
+    nombre = item["nombre"]
+    confirmacion = input(
+        f"Seguro que quieres eliminar '{nombre}'? Escribe 'eliminar' para confirmar: ")
 
     if confirmacion == "eliminar":
         coleccion.delete_one({"nombre": nombre})
@@ -49,16 +53,15 @@ def eliminar_producto():
     else:
         print("Eliminacion cancelada.")
 
+
 def actualizar_producto():
     print("=== Actualizar Item ===\n")
 
-    nombre = input("Ingresa el nombre de la preparacion: ").strip().capitalize()
-    item = buscar_item(nombre)
-
+    item = buscar_plato_interactivo()
     if item is None:
-        print(f"\n[Error] No se encontro '{nombre}' en el menu.")
-        continuar()
         return
+
+    nombre = item.get("nombre")
 
     print("Que deseas actualizar?")
     print("[1] Nombre\n[2] Categoria\n[3] Precio")
@@ -96,11 +99,7 @@ def actualizar_producto():
 
         elif campo == 5:
             limpiar_pantalla()
-            try:
-                plato = buscar_item(nombre)
-            except ValueError as e:
-                print("[Error]:", e)
-                return
+            plato = item
 
             ingredientes = plato.get("ingredientes", [])
             if not ingredientes:
@@ -112,13 +111,16 @@ def actualizar_producto():
                 fecha_actual = ing["fecha_vencimiento"].strftime("%Y-%m-%d")
                 print(f"  - {ing['nombre']} (vence: {fecha_actual})")
 
-            nombre_ingrediente = input("\nNombre del ingrediente a actualizar: ").strip().capitalize()
+            nombre_ingrediente = seleccionar_ingrediente_interactivo(
+                plato, "\nNombre del ingrediente a actualizar: "
+            )
+            if nombre_ingrediente is None:
+                return
+
             nueva_fecha = leer_fecha("Nueva fecha de vencimiento (AAAA-MM-DD): ")
-            try:
-                actualizar_fecha_vencimiento(nombre, nombre_ingrediente, nueva_fecha)
-                print(f"\nFecha de '{nombre_ingrediente}' actualizada a {nueva_fecha.strftime('%Y-%m-%d')}.")
-            except ValueError as e:
-                print("[Error]:", e)
+            actualizar_fecha_vencimiento(nombre, nombre_ingrediente, nueva_fecha)
+            print(f"\nFecha de '{nombre_ingrediente}' actualizada a {nueva_fecha.strftime('%Y-%m-%d')}.")
+
 
         else:
             limpiar_pantalla()
@@ -128,14 +130,16 @@ def actualizar_producto():
         limpiar_pantalla()
         print("\n[Error]:", e)
 
+
 def buscar_producto():
     ROJO = "\033[91m"
     RESET = "\033[0m"
     ahora = datetime.now()
     print("=== Buscar Item ===\n")
 
-    nombre = input("Ingresa el nombre de la preparacion: ").strip().capitalize()
-    item = buscar_item(nombre)
+    item = buscar_plato_interactivo()
+    if item is None:
+        return
     limpiar_pantalla()
 
     print("-" * 10, "Producto encontrado", "-" * 10)
@@ -156,6 +160,7 @@ def buscar_producto():
         print("Ingredientes: (sin registrar)")
     print("-" * 41, "\n")
 
+
 def ver_items():
     items = list(coleccion.find({}))
     print("=== Catalogo ===\n")
@@ -165,6 +170,7 @@ def ver_items():
  
     for item in items:
         print(f"- {item['nombre']:<25} | {item['categoria']:<8} | ${item['precio']}")
+
 
 def ver_disponibles():
     print("=== Platos disponibles ===\n")

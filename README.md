@@ -14,7 +14,4 @@ Adicionalmente, permite:
 - Visualizar los productos disponibles (aquellos que no tienen ingredientes vencidos).
 - Visualizar los productos con ingredientes vencidos.
 
-## Detalles por implementar
 
-- Uso de expresiones regulares (regex) para mejorar el filtrado de productos y/o ingredientes.
-- En el apartado de actualización de fecha de vencimiento de ingredientes: actualmente, si el ingrediente ingresado no existe en la preparación seleccionada, el sistema igualmente permite ingresar una fecha de vencimiento. Esto no debería ocurrir; el sistema debería verificar primero si el ingrediente existe en la preparación antes de solicitar la nueva fecha.

@@ -1,18 +1,26 @@
 from datetime import datetime
+from conexion import conexion, ping_db
 import os
-from conexion import get_db
+import re
 
- 
-db = get_db("restaurante")
-coleccion = db["menu"]
 
+DATA_BASE = "restaurante"
+COLECTION = "menu"
+
+try:
+    db = conexion(DATA_BASE)
+    coleccion = db[COLECTION]
+except Exception as e:
+    print(e)
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+
 def continuar():
     print("\nVolviendo al menu...")
     input("Enter para continuar")
+
 
 def seleccionar_categoria():
     categorias = {1: "Barra", 2: "Cocina"}
@@ -26,6 +34,7 @@ def seleccionar_categoria():
         except (ValueError, KeyError):
             print("\n[Error] Ingresa un numero de opcion valido.")
             input("Enter para continuar... ")
+
 
 def leer_precio(mensaje="Precio producto: $"):
     precio = int(input(mensaje))
@@ -138,18 +147,30 @@ def actualizar_item(nombre_item, campo, valor):
     return resultado
 
 
+def existe_ingrediente(nombre_producto, nombre_ingrediente):
+    """Devuelve True si el producto ya tiene un ingrediente con ese nombre."""
+    return coleccion.find_one({
+        "nombre": nombre_producto,
+        "ingredientes.nombre": nombre_ingrediente
+    }) is not None
+
+
 def agregar_ingrediente(nombre_producto, nombre_ingrediente, fecha_vencimiento):
+    if existe_ingrediente(nombre_producto, nombre_ingrediente):
+        raise ValueError(
+            f"'{nombre_ingrediente}' ya existe en '{nombre_producto}'. "
+            "Usa la opción 'Actualizar fecha vencimiento' en vez de agregar."
+        )
+
     resultado = coleccion.update_one(
         {"nombre": nombre_producto},
-        {"$addToSet": {"ingredientes": {
+        {"$push": {"ingredientes": {
             "nombre": nombre_ingrediente,
             "fecha_vencimiento": fecha_vencimiento
         }}}
     )
     if resultado.matched_count == 0:
         raise ValueError(f"No se encontró '{nombre_producto}' en el menú.")
-    if resultado.modified_count == 0:
-        raise ValueError("El ingrediente ya estaba ingresado.")
 
 
 def platos_disponibles():
@@ -160,3 +181,90 @@ def platos_disponibles():
     }))
 
 
+def sugerir_platos(patron, limite=3):
+    """Busca platos cuyo nombre contenga 'patron' (case-insensitive, regex)."""
+    regex = re.compile(re.escape(patron), re.IGNORECASE)
+    return list(coleccion.find({"nombre": regex}).limit(limite))
+
+
+def buscar_plato_interactivo(mensaje="Ingresa el nombre de la preparacion: "):
+    """
+    Pide el nombre de un plato. Si no hay coincidencia exacta, busca por
+    regex y muestra hasta 3 sugerencias para que el usuario elija.
+    Devuelve el documento del plato encontrado, o None si no hay match
+    o el usuario cancela.
+    """
+    nombre = input(mensaje).strip().capitalize()
+
+    try:
+        return buscar_item(nombre)
+    except ValueError:
+        pass  # no hubo match exacto, probamos con sugerencias
+
+    sugerencias = sugerir_platos(nombre)
+    if not sugerencias:
+        print(f"No se encontró '{nombre}' ni coincidencias similares en el menú.")
+        return None
+
+    print(f"No se encontró '{nombre}' exactamente. ¿Quisiste decir alguno de estos?")
+    for i, s in enumerate(sugerencias, start=1):
+        print(f"  [{i}] {s['nombre']} ({s['categoria']}) - ${s['precio']}")
+    print("  [0] Cancelar")
+
+    try:
+        opcion = int(input("Selecciona una opción: "))
+    except ValueError:
+        print("Opción inválida.")
+        return None
+
+    if opcion < 1 or opcion > len(sugerencias):
+        return None
+
+    return sugerencias[opcion - 1]
+
+
+def sugerir_ingredientes(ingredientes_lista, patron, limite=3):
+    """Filtra localmente (ya está el array en memoria) por coincidencia parcial, con regex."""
+    regex = re.compile(re.escape(patron), re.IGNORECASE)
+    return [ing for ing in ingredientes_lista if regex.search(ing["nombre"])][:limite]
+
+
+def seleccionar_ingrediente_interactivo(plato, mensaje="Nombre del ingrediente: "):
+    """
+    Pide el nombre de un ingrediente que pertenezca a 'plato'. Si no hay
+    coincidencia exacta, sugiere hasta 3 por similitud (regex). Devuelve
+    el nombre EXACTO del ingrediente ya validado, o None si no existe o
+    el usuario cancela.
+    """
+    ingredientes = plato.get("ingredientes", [])
+    if not ingredientes:
+        print(f"'{plato['nombre']}' no tiene ingredientes registrados.")
+        return None
+
+    nombre = input(mensaje).strip().capitalize()
+
+    for ing in ingredientes:
+        if ing["nombre"] == nombre:
+            return nombre  # coincidencia exacta
+
+    sugerencias = sugerir_ingredientes(ingredientes, nombre)
+    if not sugerencias:
+        print(f"'{nombre}' no es un ingrediente de '{plato['nombre']}'.")
+        return None
+
+    print(f"'{nombre}' no coincide exactamente. ¿Quisiste decir alguno de estos?")
+    for i, s in enumerate(sugerencias, start=1):
+        fecha = s["fecha_vencimiento"].strftime("%Y-%m-%d")
+        print(f"  [{i}] {s['nombre']} (vence: {fecha})")
+    print("  [0] Cancelar")
+
+    try:
+        opcion = int(input("Selecciona una opción: "))
+    except ValueError:
+        print("Opción inválida.")
+        return None
+
+    if opcion < 1 or opcion > len(sugerencias):
+        return None
+
+    return sugerencias[opcion - 1]["nombre"]
